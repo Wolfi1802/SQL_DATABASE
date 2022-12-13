@@ -32,7 +32,7 @@
                             <DataTemplate>
                                 <StackPanel>
                                     <Label Content="{Binding TableName}"/>
-                                    <DataGrid ItemsSource="{Binding .}" Height="370" AutoGenerateColumns="true" ScrollViewer.CanContentScroll="True"/>
+                                    <DataGrid ItemsSource="{Binding .}" Height="350" AutoGenerateColumns="true" ScrollViewer.CanContentScroll="True"/>
                                 </StackPanel>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
