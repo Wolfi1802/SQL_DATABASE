@@ -99,5 +99,20 @@ namespace SQL_DATABASE.MVVM
                 Debug.WriteLine($"{nameof(MainWindowViewModel)},{nameof(AddConnection)},\nEX :[{ex}]");
             }
         });
+
+        public ICommand Update => new RelayCommand(param =>
+        {
+            try
+            {
+                foreach (var table in this.CurrentTables)
+                {
+                    this.QueryInstance.UpdateOnePrimaryKey(table, this.SelectedConnection.Name);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"{nameof(MainWindowViewModel)},{nameof(AddConnection)},\nEX :[{ex}]");
+            }
+        });
     }
 }

@@ -2,6 +2,7 @@
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
@@ -53,27 +54,32 @@ namespace SQL_DATABASE.Datenbanken
 
         public List<DataTable> GetAllContentFromDatabase(string databaseName)
         {
-            List<DataTable> listOftables = new List<DataTable>();
-
-            string queryString = $"SELECT table_name " +
-                $"FROM information_schema.tables " +
-                $"WHERE table_type='BASE TABLE' " +
-                $"AND table_schema = '{databaseName}'";
-
-            var result = this.Execute(queryString);
-
-
-            foreach (DataRow row in result.Rows)
+            if (!string.IsNullOrEmpty(databaseName))
             {
-                string tableName = row.ItemArray[0].ToString();
+                List<DataTable> listOftables = new List<DataTable>();
 
-                var tableResult = this.GetSelectTable(tableName, databaseName);
+                string queryString = $"SELECT table_name " +
+                    $"FROM information_schema.tables " +
+                    $"WHERE table_type='BASE TABLE' " +
+                    $"AND table_schema = '{databaseName}'";
 
-                if (tableResult != null)
-                    listOftables.Add(tableResult);
+                var result = this.Execute(queryString);
+
+
+                foreach (DataRow row in result.Rows)
+                {
+                    string tableName = row.ItemArray[0].ToString();
+
+                    var tableResult = this.GetSelectTable(tableName, databaseName);
+
+                    if (tableResult != null)
+                        listOftables.Add(tableResult);
+                }
+
+                return listOftables;
             }
-
-            return listOftables;
+            else
+                return null;
         }
 
         public DataTable GetSelectTable(string tableName, string databaseName)
@@ -82,6 +88,36 @@ namespace SQL_DATABASE.Datenbanken
 
             return this.Execute(queryString);
         }
+
+        public void UpdateOnePrimaryKey(DataTable table, string databaseName)
+        {//pro spalte immer ein einzelnes update
+            if (table.PrimaryKey.Length == 1)
+            {
+                string updateQuery = $"UPDATE {databaseName}.{table.TableName}";
+
+                var readableTable = this.ReadDataTable(table);
+                string primaryKey = table.PrimaryKey[0].ToString();
+
+                foreach (var line in readableTable)
+                {
+                    string Set = "SET ";
+                    string Where = "WHERE ";
+
+                    foreach (var lineItem in line)
+                    {
+                        if (lineItem.Item1.Equals(primaryKey))
+                            Where += $" {lineItem.Item1}={lineItem.Item2};";
+                        else
+                            Set += $" {lineItem.Item1}='{lineItem.Item2}',";
+                    }
+
+                    this.Execute($"{updateQuery}{Set.TrimEnd(',')}{Where}");
+                }
+            }
+            else
+                Debug.WriteLine($"Es wird aktuell nur eine Tabelle mit einem Pk unterstützt.\n {table.TableName} kann nicht geändert werden!");
+        }
+
 
         private DataTable Execute(string queryString)
         {
