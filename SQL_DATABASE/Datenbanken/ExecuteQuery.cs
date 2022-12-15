@@ -1,5 +1,8 @@
 ﻿using Dapper;
+using Google.Protobuf.WellKnownTypes;
 using MySql.Data.MySqlClient;
+using Org.BouncyCastle.Utilities.Collections;
+using SQL_DATABASE.Datenbanken.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
@@ -10,6 +13,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Documents;
+using System.Xml.Linq;
 
 namespace SQL_DATABASE.Datenbanken
 {
@@ -33,6 +38,75 @@ namespace SQL_DATABASE.Datenbanken
 
         }
 
+
+        public void UpdateOnePrimaryKey(DataTable table, string databaseName)
+        {
+            //TODO[TS] für jede id nen select auf id machen, wenn result != null dann update sonst insert!
+
+            var tableModel = this.GetModel(table);
+
+            foreach (var tableRow in tableModel.Rows)
+            {
+                var selectIdResult = this.GetSelectTableWherePk(tableModel.TableName, databaseName, tableRow.PrimaryKeyValue.Key, tableRow.PrimaryKeyValue.Value);
+
+                if (selectIdResult != null && selectIdResult.Rows.Count >= 1)
+                {
+                    this.DoUpdateOneKey(tableRow, databaseName, tableModel.TableName);
+                }
+                else
+                {
+                    this.DoInsert(tableRow, databaseName, tableModel.TableName);
+                }
+            }
+        }
+
+        //TODO[TS] in helper auslagern
+        private TableModel GetModel(DataTable table)
+        {
+            TableModel tableModel = new TableModel();
+            List<ColumnModel> tableList = new List<ColumnModel>();
+
+            var readableTable = this.ReadDataTable(table);
+
+            foreach (var row in readableTable)
+            {
+                string primaryKey = table.PrimaryKey[0].ToString();
+
+                ColumnModel columnModel = new ColumnModel();
+
+                foreach (var lineItem in row)
+                {
+                    if (lineItem.Item1.Equals(primaryKey))
+                        columnModel.PrimaryKeyValue = new KeyValuePair<string, string>(lineItem.Item1, lineItem.Item2);
+                    else
+                        columnModel.RowItems.Add(lineItem.Item1, lineItem.Item2);
+                }
+
+                tableList.Add(columnModel);
+            }
+
+            tableModel.TableName = table.TableName;
+            tableModel.Rows.AddRange(tableList);
+
+
+            return tableModel;
+        }
+
+        private void DoUpdateOneKey(ColumnModel column, string databaseName, string tableName)
+        {
+            string updateQuery = $"UPDATE {databaseName}.{tableName}";
+            string Set = "SET ";
+            string Where = $"WHERE {column.PrimaryKeyValue.Key}={column.PrimaryKeyValue.Value};";
+
+            foreach (var item in column.RowItems)
+            {
+
+                Set += $" {item.Key}='{item.Value}',";
+            }
+
+            this.Execute($"{updateQuery}\n{Set.TrimEnd(',')}\n{Where}");
+        }
+
         public List<List<(string, string)>> ReadDataTable(DataTable queryResult)
         {
             List<List<(string, string)>> results = new List<List<(string, string)>>();
@@ -51,6 +125,8 @@ namespace SQL_DATABASE.Datenbanken
 
             return results;
         }
+
+        #region Querys
 
         public List<DataTable> GetAllContentFromDatabase(string databaseName)
         {
@@ -89,33 +165,25 @@ namespace SQL_DATABASE.Datenbanken
             return this.Execute(queryString);
         }
 
-        public void UpdateOnePrimaryKey(DataTable table, string databaseName)
-        {//pro spalte immer ein einzelnes update
-            if (table.PrimaryKey.Length == 1)
+        public DataTable GetSelectTableWherePk(string tableName, string databaseName, string pkName, string pkValue)
+        {
+            string queryString = $"{SELECT_ALL_} {databaseName}.{tableName} Where {pkName}={pkValue};";
+
+            return this.Execute(queryString);
+        }
+
+        public bool DoInsert(ColumnModel column, string databaseName, string tableName)
+        {
+            string insertInto = $"INSERT INTO {databaseName}.{tableName} ( {column.PrimaryKeyValue.Key},";
+            string values = $"VALUES ('{column.PrimaryKeyValue.Value}', ";
+
+            foreach (var item in column.RowItems)
             {
-                string updateQuery = $"UPDATE {databaseName}.{table.TableName}";
-
-                var readableTable = this.ReadDataTable(table);
-                string primaryKey = table.PrimaryKey[0].ToString();
-
-                foreach (var line in readableTable)
-                {
-                    string Set = "SET ";
-                    string Where = "WHERE ";
-
-                    foreach (var lineItem in line)
-                    {
-                        if (lineItem.Item1.Equals(primaryKey))
-                            Where += $" {lineItem.Item1}={lineItem.Item2};";
-                        else
-                            Set += $" {lineItem.Item1}='{lineItem.Item2}',";
-                    }
-
-                    this.Execute($"{updateQuery}{Set.TrimEnd(',')}{Where}");
-                }
+                insertInto += $" {item.Key},";
+                    values += $" '{item.Value}',";
             }
-            else
-                Debug.WriteLine($"Es wird aktuell nur eine Tabelle mit einem Pk unterstützt.\n {table.TableName} kann nicht geändert werden!");
+          
+            return this.Execute($"{insertInto.TrimEnd(',')})\n{values.TrimEnd(',')});") != null;
         }
 
 
@@ -153,5 +221,6 @@ namespace SQL_DATABASE.Datenbanken
             }
         }
 
+        #endregion
     }
 }
