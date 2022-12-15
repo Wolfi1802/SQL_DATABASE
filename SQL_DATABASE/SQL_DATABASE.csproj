@@ -106,6 +106,7 @@
     </Compile>
     <Compile Include="Datenbanken\Connection.cs" />
     <Compile Include="Datenbanken\ConnectionManager.cs" />
+    <Compile Include="Datenbanken\Helper\DatabaseConverter.cs" />
     <Compile Include="Datenbanken\Models\ColumnModel.cs" />
     <Compile Include="Datenbanken\ExecuteQuery.cs" />
     <Compile Include="Datenbanken\Models\TableModel.cs" />

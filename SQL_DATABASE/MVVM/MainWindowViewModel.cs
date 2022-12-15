@@ -106,7 +106,7 @@ namespace SQL_DATABASE.MVVM
             {
                 foreach (var table in this.CurrentTables)
                 {
-                    this.QueryInstance.UpdateOnePrimaryKey(table, this.SelectedConnection.Name);
+                    this.QueryInstance.Update(table, this.SelectedConnection.Name);
                 }
             }
             catch (Exception ex)

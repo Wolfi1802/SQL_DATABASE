@@ -1,7 +1,9 @@
 ﻿using Dapper;
 using Google.Protobuf.WellKnownTypes;
 using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI.Common;
 using Org.BouncyCastle.Utilities.Collections;
+using SQL_DATABASE.Datenbanken.Helper;
 using SQL_DATABASE.Datenbanken.Models;
 using System;
 using System.Collections.Generic;
@@ -14,6 +16,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Documents;
+using System.Windows.Media.Animation;
 using System.Xml.Linq;
 
 namespace SQL_DATABASE.Datenbanken
@@ -21,8 +24,14 @@ namespace SQL_DATABASE.Datenbanken
     public class ExecuteQuery
     {
         private const string SELECT_ALL_ = "SELECT * FROM ";
+        private const string SELECT_ALL_TABLES = "SELECT table_name " +
+                    "FROM information_schema.tables " +
+                    "WHERE table_type='BASE TABLE' " +
+                    "AND table_schema =";
+
         private ExecuteQuery _instance;
         private MySqlConnection DbConnection = null;
+        private DatabaseConverter databaseConverterHelper;
 
         public ExecuteQuery(MySqlConnection connection)
         {
@@ -30,6 +39,7 @@ namespace SQL_DATABASE.Datenbanken
             {
                 Debug.WriteLine("Erstelle Db Instanz!");
                 this.DbConnection = connection;
+                this.databaseConverterHelper = new DatabaseConverter();
             }
             catch (Exception ex)
             {
@@ -38,141 +48,69 @@ namespace SQL_DATABASE.Datenbanken
 
         }
 
-
-        public void UpdateOnePrimaryKey(DataTable table, string databaseName)
-        {
-            //TODO[TS] für jede id nen select auf id machen, wenn result != null dann update sonst insert!
-
-            var tableModel = this.GetModel(table);
-
-            foreach (var tableRow in tableModel.Rows)
-            {
-                var selectIdResult = this.GetSelectTableWherePk(tableModel.TableName, databaseName, tableRow.PrimaryKeyValue.Key, tableRow.PrimaryKeyValue.Value);
-
-                if (selectIdResult != null && selectIdResult.Rows.Count >= 1)
-                {
-                    this.DoUpdateOneKey(tableRow, databaseName, tableModel.TableName);
-                }
-                else
-                {
-                    this.DoInsert(tableRow, databaseName, tableModel.TableName);
-                }
-            }
-        }
-
-        //TODO[TS] in helper auslagern
-        private TableModel GetModel(DataTable table)
-        {
-            TableModel tableModel = new TableModel();
-            List<ColumnModel> tableList = new List<ColumnModel>();
-
-            var readableTable = this.ReadDataTable(table);
-
-            foreach (var row in readableTable)
-            {
-                string primaryKey = table.PrimaryKey[0].ToString();
-
-                ColumnModel columnModel = new ColumnModel();
-
-                foreach (var lineItem in row)
-                {
-                    if (lineItem.Item1.Equals(primaryKey))
-                        columnModel.PrimaryKeyValue = new KeyValuePair<string, string>(lineItem.Item1, lineItem.Item2);
-                    else
-                        columnModel.RowItems.Add(lineItem.Item1, lineItem.Item2);
-                }
-
-                tableList.Add(columnModel);
-            }
-
-            tableModel.TableName = table.TableName;
-            tableModel.Rows.AddRange(tableList);
-
-
-            return tableModel;
-        }
-
-        private void DoUpdateOneKey(ColumnModel column, string databaseName, string tableName)
-        {
-            string updateQuery = $"UPDATE {databaseName}.{tableName}";
-            string Set = "SET ";
-            string Where = $"WHERE {column.PrimaryKeyValue.Key}={column.PrimaryKeyValue.Value};";
-
-            foreach (var item in column.RowItems)
-            {
-
-                Set += $" {item.Key}='{item.Value}',";
-            }
-
-            this.Execute($"{updateQuery}\n{Set.TrimEnd(',')}\n{Where}");
-        }
-
-        public List<List<(string, string)>> ReadDataTable(DataTable queryResult)
-        {
-            List<List<(string, string)>> results = new List<List<(string, string)>>();
-
-            foreach (DataRow row in queryResult.Rows)
-            {
-                List<(string, string)> rowList = new List<(string, string)>();
-
-                foreach (var column in queryResult.Columns)
-                {
-                    string value = row[column.ToString()].ToString();
-                    rowList.Add((column.ToString(), value));
-                }
-                results.Add(rowList);
-            }
-
-            return results;
-        }
-
-        #region Querys
-
         public List<DataTable> GetAllContentFromDatabase(string databaseName)
         {
             if (!string.IsNullOrEmpty(databaseName))
             {
-                List<DataTable> listOftables = new List<DataTable>();
+                List<DataTable> listOfTables = new List<DataTable>();
+                DataTable allTableQueryResult = this.DoSelectAllTableNames(databaseName);
 
-                string queryString = $"SELECT table_name " +
-                    $"FROM information_schema.tables " +
-                    $"WHERE table_type='BASE TABLE' " +
-                    $"AND table_schema = '{databaseName}'";
-
-                var result = this.Execute(queryString);
-
-
-                foreach (DataRow row in result.Rows)
+                foreach (DataRow row in allTableQueryResult.Rows)
                 {
-                    string tableName = row.ItemArray[0].ToString();
-
-                    var tableResult = this.GetSelectTable(tableName, databaseName);
+                    DataTable tableResult = this.DoSelectTable(row.ItemArray[0].ToString(), databaseName);
 
                     if (tableResult != null)
-                        listOftables.Add(tableResult);
+                        listOfTables.Add(tableResult);
                 }
 
-                return listOftables;
+                return listOfTables;
             }
             else
                 return null;
         }
 
-        public DataTable GetSelectTable(string tableName, string databaseName)
+        public DataTable Update(DataTable table, string databaseName)
+        {
+            TableModel tableModel = this.databaseConverterHelper.Convert(table);
+
+            foreach (ColumnModel tableRow in tableModel.Rows)
+            {
+                this.Update(tableRow, databaseName, tableModel.TableName);
+            }
+
+            return null;
+        }
+
+        public DataTable Update(ColumnModel tableRow, string databaseName, string tableName)
+        {
+            DataTable selectIdResult = this.DoSelectTableWherePK(tableName, databaseName, tableRow.PrimaryKeyValue.Key, tableRow.PrimaryKeyValue.Value);
+
+            if (selectIdResult != null && selectIdResult.Rows.Count >= 1)
+                return this.DoUpdate(tableRow, databaseName, tableName);
+            else
+                return this.DoInsert(tableRow, databaseName, tableName);
+        }
+
+        public DataTable DoSelectTable(string tableName, string databaseName)
         {
             string queryString = $"{SELECT_ALL_} {databaseName}.{tableName};";
 
             return this.Execute(queryString);
         }
 
-        public DataTable GetSelectTableWherePk(string tableName, string databaseName, string pkName, string pkValue)
+        public DataTable DoSelectAllTableNames(string databaseName)
+        {
+            return this.Execute($"{SELECT_ALL_TABLES} '{databaseName}'");
+        }
+
+        public DataTable DoSelectTableWherePK(string tableName, string databaseName, string pkName, string pkValue)
         {
             string queryString = $"{SELECT_ALL_} {databaseName}.{tableName} Where {pkName}={pkValue};";
 
             return this.Execute(queryString);
         }
 
-        public bool DoInsert(ColumnModel column, string databaseName, string tableName)
+        public DataTable DoInsert(ColumnModel column, string databaseName, string tableName)
         {
             string insertInto = $"INSERT INTO {databaseName}.{tableName} ( {column.PrimaryKeyValue.Key},";
             string values = $"VALUES ('{column.PrimaryKeyValue.Value}', ";
@@ -180,12 +118,25 @@ namespace SQL_DATABASE.Datenbanken
             foreach (var item in column.RowItems)
             {
                 insertInto += $" {item.Key},";
-                    values += $" '{item.Value}',";
+                values += $" '{item.Value}',";
             }
-          
-            return this.Execute($"{insertInto.TrimEnd(',')})\n{values.TrimEnd(',')});") != null;
+
+            return this.Execute($"{insertInto.TrimEnd(',')})\n{values.TrimEnd(',')});");
         }
 
+        public DataTable DoUpdate(ColumnModel column, string databaseName, string tableName)
+        {
+            string updateQuery = $"UPDATE {databaseName}.{tableName}";
+            string Set = "SET ";
+            string Where = $"WHERE {column.PrimaryKeyValue.Key}={column.PrimaryKeyValue.Value};";
+
+            foreach (var item in column.RowItems)
+            {
+                Set += $" {item.Key}='{item.Value}',";
+            }
+
+            return this.Execute($"{updateQuery}\n{Set.TrimEnd(',')}\n{Where}");
+        }
 
         private DataTable Execute(string queryString)
         {
@@ -221,6 +172,5 @@ namespace SQL_DATABASE.Datenbanken
             }
         }
 
-        #endregion
     }
 }
