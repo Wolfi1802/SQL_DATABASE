@@ -70,6 +70,11 @@ namespace SQL_DATABASE.MVVM
 
         private void DataBaseSelected(Connection db)
         {
+            if (db == null)
+                return;
+
+            Debug.WriteLine($"User wählt Db [{db.Name}] aus.");
+
             this.QueryInstance = new ExecuteQuery(db.MyConnection);
             this.CurrentTables = this.QueryInstance.GetAllContentFromDatabase($"{this.SelectedConnection.Name}");
             this.RefreshEnabled = true;
@@ -96,7 +101,7 @@ namespace SQL_DATABASE.MVVM
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"{nameof(MainWindowViewModel)},{nameof(AddConnection)},\nEX :[{ex}]");
+                Debug.WriteLine($"{nameof(MainWindowViewModel)},{nameof(Refresh)},\nEX :[{ex}]");
             }
         });
 
@@ -111,22 +116,7 @@ namespace SQL_DATABASE.MVVM
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"{nameof(MainWindowViewModel)},{nameof(AddConnection)},\nEX :[{ex}]");
-            }
-        });
-
-        public ICommand Insert => new RelayCommand(param =>
-        {
-            try
-            {
-                foreach (var table in this.CurrentTables)
-                {
-                    //this.QueryInstance.InsertQuery(table, this.SelectedConnection.Name);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"{nameof(MainWindowViewModel)},{nameof(AddConnection)},\nEX :[{ex}]");
+                Debug.WriteLine($"{nameof(MainWindowViewModel)},{nameof(Update)},\nEX :[{ex}]");
             }
         });
     }

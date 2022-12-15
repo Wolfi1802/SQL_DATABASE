@@ -45,16 +45,18 @@ namespace SQL_DATABASE.Datenbanken
             {
                 Debug.WriteLine("Unerwarte Exception beim DB Stuff", ex);
             }
-
         }
 
         public List<DataTable> GetAllContentFromDatabase(string databaseName)
         {
-            if (!string.IsNullOrEmpty(databaseName))
-            {
-                List<DataTable> listOfTables = new List<DataTable>();
-                DataTable allTableQueryResult = this.DoSelectAllTableNames(databaseName);
+            if (string.IsNullOrEmpty(databaseName))
+                return null;
 
+            List<DataTable> listOfTables = new List<DataTable>();
+            DataTable allTableQueryResult = this.DoSelectAllTableNames(databaseName);
+
+            if (allTableQueryResult != null)
+            {
                 foreach (DataRow row in allTableQueryResult.Rows)
                 {
                     DataTable tableResult = this.DoSelectTable(row.ItemArray[0].ToString(), databaseName);
@@ -69,21 +71,41 @@ namespace SQL_DATABASE.Datenbanken
                 return null;
         }
 
-        public DataTable Update(DataTable table, string databaseName)
+        public bool? Update(DataTable table, string databaseName)
         {
+            if (table == null || string.IsNullOrEmpty(databaseName))
+                return null;
+
             TableModel tableModel = this.databaseConverterHelper.Convert(table);
 
-            foreach (ColumnModel tableRow in tableModel.Rows)
+            if (tableModel != null)
             {
-                this.Update(tableRow, databaseName, tableModel.TableName);
-            }
+                try
+                {
+                    foreach (ColumnModel tableRow in tableModel.Rows)
+                    {
+                        this.Update(tableRow, databaseName, tableModel.TableName);
+                    }
 
-            return null;
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"{nameof(ExecuteQuery)},{nameof(Update)},{ex.Message}");
+                    return false;
+                }
+            }
+            else
+                return null;
         }
 
         public DataTable Update(ColumnModel tableRow, string databaseName, string tableName)
         {
-            DataTable selectIdResult = this.DoSelectTableWherePK(tableName, databaseName, tableRow.PrimaryKeyValue.Key, tableRow.PrimaryKeyValue.Value);
+            if (tableRow == null || string.IsNullOrEmpty(databaseName) || string.IsNullOrEmpty(tableName))
+                return null;
+
+            DataTable selectIdResult = this.DoSelectTableWherePK(tableName, databaseName, tableRow.PrimaryKeyValue.Key,
+                tableRow.PrimaryKeyValue.Value);
 
             if (selectIdResult != null && selectIdResult.Rows.Count >= 1)
                 return this.DoUpdate(tableRow, databaseName, tableName);
@@ -93,6 +115,9 @@ namespace SQL_DATABASE.Datenbanken
 
         public DataTable DoSelectTable(string tableName, string databaseName)
         {
+            if (string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(databaseName))
+                return null;
+
             string queryString = $"{SELECT_ALL_} {databaseName}.{tableName};";
 
             return this.Execute(queryString);
@@ -100,11 +125,18 @@ namespace SQL_DATABASE.Datenbanken
 
         public DataTable DoSelectAllTableNames(string databaseName)
         {
+            if (string.IsNullOrEmpty(databaseName))
+                return null;
+
             return this.Execute($"{SELECT_ALL_TABLES} '{databaseName}'");
         }
 
         public DataTable DoSelectTableWherePK(string tableName, string databaseName, string pkName, string pkValue)
         {
+            if (string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(databaseName) ||
+                string.IsNullOrEmpty(pkName) || string.IsNullOrEmpty(pkValue))
+                return null;
+
             string queryString = $"{SELECT_ALL_} {databaseName}.{tableName} Where {pkName}={pkValue};";
 
             return this.Execute(queryString);
@@ -112,6 +144,9 @@ namespace SQL_DATABASE.Datenbanken
 
         public DataTable DoInsert(ColumnModel column, string databaseName, string tableName)
         {
+            if (column == null || string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(databaseName))
+                return null;
+
             string insertInto = $"INSERT INTO {databaseName}.{tableName} ( {column.PrimaryKeyValue.Key},";
             string values = $"VALUES ('{column.PrimaryKeyValue.Value}', ";
 
@@ -126,6 +161,9 @@ namespace SQL_DATABASE.Datenbanken
 
         public DataTable DoUpdate(ColumnModel column, string databaseName, string tableName)
         {
+            if (column == null || string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(databaseName))
+                return null;
+
             string updateQuery = $"UPDATE {databaseName}.{tableName}";
             string Set = "SET ";
             string Where = $"WHERE {column.PrimaryKeyValue.Key}={column.PrimaryKeyValue.Value};";
@@ -140,6 +178,9 @@ namespace SQL_DATABASE.Datenbanken
 
         private DataTable Execute(string queryString)
         {
+            if (string.IsNullOrEmpty(queryString))
+                return null;
+
             using (MySqlConnection connection = this.DbConnection)
             {
                 try
