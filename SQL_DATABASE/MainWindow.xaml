@@ -48,6 +48,7 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <Label Grid.Column="0" Margin="0,0,5,0" Content="Select your Database Connection" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
@@ -63,6 +64,7 @@
             <Button Grid.Column="2" Content=" + " Margin="5,0,0,0" ToolTip="Add Connection" Command="{Binding AddConnection}" IsEnabled="False"/>
             <Button Grid.Column="3" Content=" R " Margin="5,0,0,0" ToolTip="Refresh current Datas" Command="{Binding Refresh}" IsEnabled="{Binding RefreshEnabled}"/>
             <Button Grid.Column="4" Content=" U " Margin="5,0,0,0" ToolTip="Update Datas" Command="{Binding Update}" IsEnabled="{Binding RefreshEnabled}"/>
+            <Button Grid.Column="5" Content=" Test " Margin="5,0,0,0" ToolTip="Add Test Tables" Command="{Binding AddTestTables}"/>
         </Grid>
     </Grid>
 </Window>

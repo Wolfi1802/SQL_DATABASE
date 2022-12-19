@@ -28,10 +28,12 @@ namespace SQL_DATABASE.Datenbanken
             MySqlConnection TimosTest = new MySqlConnection("server=localhost;user id=root;password=;database=TimosTest;");
             MySqlConnection Customer = new MySqlConnection("server=localhost;user id=root;password=;database=Customer;");
             MySqlConnection referencetooldb = new MySqlConnection("server=localhost;user id=root;password=;database=referencetooldb;");
+            MySqlConnection CreateTest = new MySqlConnection("server=localhost;user id=root;password=;database=CreateTest;");
 
             this.connections.Add("TimosTest", TimosTest);
             this.connections.Add("Customer", Customer);
             this.connections.Add("referencetooldb", referencetooldb);
+            this.connections.Add("CreateTest", CreateTest);
         }
 
         public MySqlConnection GetConnection(string dataBaseName)

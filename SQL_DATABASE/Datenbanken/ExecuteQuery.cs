@@ -29,6 +29,10 @@ namespace SQL_DATABASE.Datenbanken
                     "WHERE table_type='BASE TABLE' " +
                     "AND table_schema =";
 
+        private const string CREATE_TABLE_PERSON = "CREATE TABLE Persons (PersonID int NOT NULL, LastName varchar(255) NOT NULL, FirstName varchar(255), Age int, CONSTRAINT PK_Person PRIMARY KEY (PersonID,LastName));";
+
+        private const string CREATE_TABLE_ORDERS_FK_PERSON = "CREATE TABLE Orders (OrderID int NOT NULL,OrderNumber int NOT NULL,PersonID int,PRIMARY KEY (OrderID),CONSTRAINT FK_PersonOrder FOREIGN KEY (PersonID)REFERENCES Persons(PersonID));";
+
         private ExecuteQuery _instance;
         private MySqlConnection DbConnection = null;
         private DatabaseConverter databaseConverterHelper;
@@ -69,6 +73,12 @@ namespace SQL_DATABASE.Datenbanken
             }
             else
                 return null;
+        }
+
+        public void CreateTestTables()
+        {
+            this.Execute(CREATE_TABLE_PERSON);
+            this.Execute(CREATE_TABLE_ORDERS_FK_PERSON);
         }
 
         public bool? Update(DataTable table, string databaseName)
@@ -201,7 +211,7 @@ namespace SQL_DATABASE.Datenbanken
                 }
                 catch (MySqlException ex)
                 {
-                    Debug.WriteLine($"RIP execute query ist bruch \n{ex}");
+                    Debug.WriteLine($"RIP execute query ist bruch \n{ex.Message}\n");
 
                     return null;
                 }

@@ -120,5 +120,18 @@ namespace SQL_DATABASE.MVVM
                 Debug.WriteLine($"{nameof(MainWindowViewModel)},{nameof(Update)},\nEX :[{ex}]");
             }
         });
+
+        public ICommand AddTestTables => new RelayCommand(param =>
+        {
+            try
+            {
+                this.QueryInstance.CreateTestTables();
+                this.CurrentTables = this.QueryInstance.GetAllContentFromDatabase($"{this.SelectedConnection.Name}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"{nameof(MainWindowViewModel)},{nameof(AddTestTables)},\nEX :[{ex}]");
+            }
+        });
     }
 }
