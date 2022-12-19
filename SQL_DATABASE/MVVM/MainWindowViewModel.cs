@@ -125,7 +125,12 @@ namespace SQL_DATABASE.MVVM
         {
             try
             {
+                //ADD Table
                 this.QueryInstance.CreateTestTables();
+                this.CurrentTables = this.QueryInstance.GetAllContentFromDatabase($"{this.SelectedConnection.Name}");
+                //ADD TEEST Datas
+
+                this.QueryInstance.CreateTestTablesDatas();
                 this.CurrentTables = this.QueryInstance.GetAllContentFromDatabase($"{this.SelectedConnection.Name}");
             }
             catch (Exception ex)

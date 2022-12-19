@@ -14,6 +14,7 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Documents;
 using System.Windows.Media.Animation;
@@ -29,9 +30,12 @@ namespace SQL_DATABASE.Datenbanken
                     "WHERE table_type='BASE TABLE' " +
                     "AND table_schema =";
 
-        private const string CREATE_TABLE_PERSON = "CREATE TABLE Persons (PersonID int NOT NULL, LastName varchar(255) NOT NULL, FirstName varchar(255), Age int, CONSTRAINT PK_Person PRIMARY KEY (PersonID,LastName));";
+        private const string CREATE_TABLE_PERSON = "CREATE TABLE Persons (PersonID int NOT NULL AUTO_INCREMENT, LastName varchar(255) NOT NULL, FirstName varchar(255), Age int, CONSTRAINT PK_Person PRIMARY KEY (PersonID,LastName));";
 
-        private const string CREATE_TABLE_ORDERS_FK_PERSON = "CREATE TABLE Orders (OrderID int NOT NULL,OrderNumber int NOT NULL,PersonID int,PRIMARY KEY (OrderID),CONSTRAINT FK_PersonOrder FOREIGN KEY (PersonID)REFERENCES Persons(PersonID));";
+        private const string CREATE_TABLE_ORDERS_FK_PERSON = "CREATE TABLE Orders (OrderID int NOT NULL AUTO_INCREMENT,OrderNumber int NOT NULL,PersonID int,PRIMARY KEY (OrderID),CONSTRAINT FK_PersonOrder FOREIGN KEY (PersonID)REFERENCES Persons(PersonID));";
+
+        private const string INSERT_INTO_PERSON = "INSERT INTO Persons (LastName, FirstName, Age)";
+        private const string INSERT_INTO_ORDERS = "INSERT INTO Orders (OrderNumber, PersonID)";
 
         private ExecuteQuery _instance;
         private MySqlConnection DbConnection = null;
@@ -79,6 +83,19 @@ namespace SQL_DATABASE.Datenbanken
         {
             this.Execute(CREATE_TABLE_PERSON);
             this.Execute(CREATE_TABLE_ORDERS_FK_PERSON);
+        }
+
+        public void CreateTestTablesDatas()
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                var insertQueryPerson = $"{INSERT_INTO_PERSON} VALUES('The','Dev','{i}');";
+                var insertQueryTable = $"{INSERT_INTO_ORDERS} VALUES('{new Random().Next(1000)}', '{i}');";
+
+                this.Execute(insertQueryPerson);
+                this.Execute(insertQueryTable);
+                Thread.Sleep(100);
+            }
         }
 
         public bool? Update(DataTable table, string databaseName)
