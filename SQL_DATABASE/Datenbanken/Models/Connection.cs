@@ -1,6 +1,6 @@
 ﻿using MySql.Data.MySqlClient;
 
-namespace SQL_DATABASE.Datenbanken
+namespace SQL_DATABASE.Datenbanken.Models
 {
     public class Connection
     {

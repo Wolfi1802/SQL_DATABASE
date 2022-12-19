@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using MySql.Data.MySqlClient;
 using SQL_DATABASE.Datenbanken;
+using SQL_DATABASE.Datenbanken.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

@@ -104,7 +104,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Datenbanken\Connection.cs" />
+    <Compile Include="Datenbanken\Models\Connection.cs" />
     <Compile Include="Datenbanken\ConnectionManager.cs" />
     <Compile Include="Datenbanken\Helper\DatabaseConverter.cs" />
     <Compile Include="Datenbanken\Models\ColumnModel.cs" />
