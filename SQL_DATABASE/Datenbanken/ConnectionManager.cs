@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace SQL_DATABASE.Datenbanken
 {
@@ -29,11 +30,14 @@ namespace SQL_DATABASE.Datenbanken
             MySqlConnection Customer = new MySqlConnection("server=localhost;user id=root;password=;database=Customer;");
             MySqlConnection referencetooldb = new MySqlConnection("server=localhost;user id=root;password=;database=referencetooldb;");
             MySqlConnection CreateTest = new MySqlConnection("server=localhost;user id=root;password=;database=CreateTest;");
+            MySqlConnection test = new MySqlConnection("server=localhost;user id=root;password=;database=test;");
+            
 
             this.connections.Add("TimosTest", TimosTest);
             this.connections.Add("Customer", Customer);
             this.connections.Add("referencetooldb", referencetooldb);
             this.connections.Add("CreateTest", CreateTest);
+            this.connections.Add("test", test);
         }
 
         public MySqlConnection GetConnection(string dataBaseName)
