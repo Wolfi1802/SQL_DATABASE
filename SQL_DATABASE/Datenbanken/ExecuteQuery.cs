@@ -94,7 +94,6 @@ namespace SQL_DATABASE.Datenbanken
 
                 this.Execute(insertQueryPerson);
                 this.Execute(insertQueryTable);
-                Thread.Sleep(100);
             }
         }
 
@@ -216,7 +215,7 @@ namespace SQL_DATABASE.Datenbanken
                     Debug.WriteLine($"{DateTime.Now} connection wurde geöffnet!");
                     Debug.WriteLine($"Benutze Query [{queryString}]");
 
-                    this.DbConnection.Query<string>(queryString).FirstOrDefault();
+                    //this.DbConnection.Query<string>(queryString).FirstOrDefault();//[TS] Remove double execute of querys
 
                     MySqlCommand command = new MySqlCommand(queryString, connection);
                     MySqlDataReader reader = command.ExecuteReader();
