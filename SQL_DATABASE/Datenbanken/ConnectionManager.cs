@@ -31,13 +31,15 @@ namespace SQL_DATABASE.Datenbanken
             MySqlConnection referencetooldb = new MySqlConnection("server=localhost;user id=root;password=;database=referencetooldb;");
             MySqlConnection CreateTest = new MySqlConnection("server=localhost;user id=root;password=;database=CreateTest;");
             MySqlConnection test = new MySqlConnection("server=localhost;user id=root;password=;database=test;");
-            
+            MySqlConnection weatherStation = new MySqlConnection("server=localhost;user id=root;password=;database=wetterstation;");
 
+            this.connections.Add("wetterstation", weatherStation);
             this.connections.Add("TimosTest", TimosTest);
             this.connections.Add("Customer", Customer);
             this.connections.Add("referencetooldb", referencetooldb);
             this.connections.Add("CreateTest", CreateTest);
             this.connections.Add("test", test);
+
         }
 
         public MySqlConnection GetConnection(string dataBaseName)

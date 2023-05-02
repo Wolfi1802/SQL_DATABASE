@@ -1,24 +1,10 @@
-﻿using Dapper;
-using Google.Protobuf.WellKnownTypes;
-using MySql.Data.MySqlClient;
-using MySqlX.XDevAPI.Common;
-using Org.BouncyCastle.Utilities.Collections;
+﻿using MySql.Data.MySqlClient;
 using SQL_DATABASE.Datenbanken.Helper;
 using SQL_DATABASE.Datenbanken.Models;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Data;
-using System.Data.Common;
-using System.Data.SqlClient;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Documents;
-using System.Windows.Media.Animation;
-using System.Xml.Linq;
 
 namespace SQL_DATABASE.Datenbanken
 {
@@ -198,6 +184,11 @@ namespace SQL_DATABASE.Datenbanken
             {
                 Set += $" {item.Key}='{item.Value}',";
             }
+
+            if (Set.Contains("'True'"))
+                Set = Set.Replace("'True'", "'1'");
+            if (Set.Contains("'False'"))
+                Set = Set.Replace("'False'", "'0'");
 
             return this.Execute($"{updateQuery}\n{Set.TrimEnd(',')}\n{Where}");
         }
